@@ -5,7 +5,7 @@ import os
 import argparse
 import gzip
 
-#This script is for filtering variants from a VCF file. Specify a set of positions, and the type of variants to be filtered out.
+#This script is for filtering variants from a VCF file. Specify a set of positions, and the type of variants to be filtered out. Output is a new VCFfile
 
 parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-p', action="store", type=str, required=True, nargs='+', dest='positions', default="", help='Positions')

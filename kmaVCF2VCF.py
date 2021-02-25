@@ -5,7 +5,7 @@ import os
 import argparse
 import gzip
 
-
+#Formats KMA's VCF from AD6 to DP4 and fixes KMA indel format.
 
 parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf', default="", help='kma vcf')
