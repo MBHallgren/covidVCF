@@ -27,50 +27,52 @@ def main():
     vcflist = covertBaseCalls(vcflist)
     print (vcfheader)
     for i in range(len(vcflist)):
-        print (" ".join(vcflist[i]))
+        print ("\t".join(vcflist[i]))
 
 def covertBaseCalls(vcflist):
     newVCFlist = []
     for position in vcflist:
-        dp4 = ["0","0","0","0"]
+        dp4 = [0,0,0,0]
         ad6 = position[7].split(";")[5][4:].split(",")
         if position[3] == "A":
-            dp4[0] = ad6[0]
-            dp4[1] = ad6[3]
+            dp4[0] = int(ad6[0])/2
+            dp4[1] = int(ad6[0])/2
         elif position[3] == "C":
-            dp4[0] = ad6[1]
-            dp4[1] = ad6[2]
+            dp4[0] = int(ad6[1])/2
+            dp4[1] = int(ad6[1])/2
         elif position[3] == "G":
-            dp4[0] = ad6[2]
-            dp4[1] = ad6[1]
+            dp4[0] = int(ad6[2])/2
+            dp4[1] = int(ad6[2])/2
         elif position[3] == "T":
-            dp4[0] = ad6[3]
-            dp4[1] = ad6[0]
+            dp4[0] = int(ad6[3])/2
+            dp4[1] = int(ad6[3])/2
         elif position[3] == "N":
-            dp4[0] = ad6[4]
-            dp4[1] = "0"
+            dp4[0] = int(ad6[4])/2
+            dp4[1] = int(ad6[4])/2
         elif position[3] == "-":
-            dp4[0] = ad6[5]
-            dp4[1] = ad6[5]
+            dp4[0] = int(ad6[5])/2
+            dp4[1] = int(ad6[5])/2
 
         if position[4].upper() == "A":
-            dp4[2] = ad6[0]
-            dp4[3] = ad6[3]
+            dp4[2] = int(ad6[0])/2
+            dp4[3] = int(ad6[0])/2
         elif position[4].upper() == "C":
-            dp4[2] = ad6[1]
-            dp4[3] = ad6[2]
+            dp4[2] = int(ad6[1])/2
+            dp4[3] = int(ad6[1])/2
         elif position[4].upper() == "G":
-            dp4[2] = ad6[2]
-            dp4[3] = ad6[1]
+            dp4[2] = int(ad6[2])/2
+            dp4[3] = int(ad6[2])/2
         elif position[4].upper() == "T":
-            dp4[2] = ad6[3]
-            dp4[3] = ad6[0]
+            dp4[2] = int(ad6[3])/2
+            dp4[3] = int(ad6[3])/2
         elif position[4].upper() == "N":
-            dp4[2] = ad6[4]
-            dp4[3] = "0"
+            dp4[2] = int(ad6[4])/2
+            dp4[3] = int(ad6[4])/2
         elif position[4].upper() == "-":
-            dp4[2] = ad6[5]
-            dp4[3] = ad6[5]
+            dp4[2] = int(ad6[5])/2
+            dp4[3] = int(ad6[5])/2
+        for i in range(len(dp4)):
+            dp4[i] = str(dp4[i])
         vcfinfo = position[7].split(";")
         vcfinfo[5] = "DP4=" + ",".join(dp4)
         position[7] = ";".join(vcfinfo)
