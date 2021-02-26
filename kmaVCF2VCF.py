@@ -24,10 +24,19 @@ vcf = args.vcf
 def main():
     vcflist = loadVCF(vcf)
     vcflist = convertVCF(vcflist)
-    #vcflist = covertBaseCalls(vcflist)
+    vcflist = indelTag(vcflist)
     print (vcfheader)
     for i in range(len(vcflist)):
         print ("\t".join(vcflist[i]))
+
+def indelTag(vcflist):
+    newVCFlist = []
+    for position in vcflist:
+        if len(position[3]) > 1 or len(position[4]) > 1:
+            position[7] = position[7] + ";INDEL"
+        newVCFlist.append(position)
+    return newVCFlist
+
 
 def covertBaseCalls(vcflist):
     newVCFlist = []

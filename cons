@@ -8,8 +8,8 @@
 ##INFO=<ID=HRUN,Number=1,Type=Integer,Description="Homopolymer length to the right of report indel position">
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	1	.	A	C	52	.	DP=151;AD=62;AF=0.41;RAF=0.95;DEL=8;AD6=2,61,59,21,0,8	Q:P:FT	120.70:1.0e-26:LowQual
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	2	.	A	T	94	.	DP=157;AD=75;AF=0.48;RAF=0.96;DEL=6;AD6=6,69,1,75,0,6	Q:P:FT	133.92:1.0e-26:LowQual
-NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	3120	.	C	ata	35	.	DP=157;AD=58;AF=0.37;RAF=0.91;DEL=14;AD6=58,51,5,29,0,14	Q:P:FT	105.99:1.0e-24:LowQual
-NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	15690	.	CG	t	100	.	DP=156;AD=76;AF=0.49;RAF=0.97;DEL=4;AD6=6,64,6,76,0,4	Q:P:FT	140.41:1.0e-26:LowQual
+NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	3120	.	C	ata	35	.	DP=157;AD=58;AF=0.37;RAF=0.91;DEL=14;AD6=58,51,5,29,0,14;INDEL	Q:P:FT	105.99:1.0e-24:LowQual
+NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	15690	.	CG	t	100	.	DP=156;AD=76;AF=0.49;RAF=0.97;DEL=4;AD6=6,64,6,76,0,4;INDEL	Q:P:FT	140.41:1.0e-26:LowQual
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	28290	.	G	a	92	.	DP=130;AD=65;AF=0.50;RAF=0.50;DEL=7;AD6=65,2,46,10,0,7	Q:P:FT	0.00:1.0e+00:FAIL
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	28292	.	C	t	70	.	DP=130;AD=60;AF=0.46;RAF=0.91;DEL=12;AD6=29,29,0,60,0,12	Q:P:FT	86.43:1.0e-19:LowQual
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	29758	.	G	t	80	.	DP=135;AD=64;AF=0.47;RAF=0.99;DEL=1;AD6=44,2,24,64,0,1	Q:P:FT	131.03:1.0e-26:LowQual
@@ -155,7 +155,7 @@ NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48255	
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48261	.	T	g	17	.	DP=22;AD=10;AF=0.45;RAF=0.95;DEL=1;AD6=1,1,10,9,0,1	Q:P:FT	18.18:2.0e-05:LowQual
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48264	.	G	a	13	.	DP=22;AD=9;AF=0.41;RAF=0.91;DEL=2;AD6=9,5,5,1,0,2	Q:P:FT	14.73:1.2e-04:LowQual
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48265	.	G	t	17	.	DP=22;AD=10;AF=0.45;RAF=0.77;DEL=5;AD6=2,4,1,10,0,5	Q:P:FT	6.55:1.1e-02:LowQual
-NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48274	.	G	tc	32	.	DP=22;AD=13;AF=0.59;RAF=0.59;DEL=1;AD6=0,2,6,13,0,1	Q:P:FT	0.73:3.9e-01:FAIL
+NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48274	.	G	tc	32	.	DP=22;AD=13;AF=0.59;RAF=0.59;DEL=1;AD6=0,2,6,13,0,1;INDEL	Q:P:FT	0.73:3.9e-01:FAIL
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48288	.	G	t	39	.	DP=22;AD=14;AF=0.64;RAF=0.64;DEL=1;AD6=1,0,6,14,0,1	Q:P:FT	1.64:2.0e-01:FAIL
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48291	.	T	c	32	.	DP=22;AD=13;AF=0.59;RAF=0.59;DEL=0;AD6=2,13,0,7,0,0	Q:P:FT	0.73:3.9e-01:FAIL
 NZ_CP024801.1 Escherichia coli strain AMA1167 chromosome, complete genome	48292	.	G	c	21	.	DP=22;AD=11;AF=0.50;RAF=0.50;DEL=2;AD6=1,11,8,0,0,2	Q:P:FT	0.00:1.0e+00:FAIL
