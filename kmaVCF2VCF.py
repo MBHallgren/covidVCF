@@ -24,7 +24,7 @@ vcf = args.vcf
 def main():
     vcflist = loadVCF(vcf)
     vcflist = convertVCF(vcflist)
-    vcflist = covertBaseCalls(vcflist)
+    #vcflist = covertBaseCalls(vcflist)
     print (vcfheader)
     for i in range(len(vcflist)):
         print ("\t".join(vcflist[i]))
@@ -85,15 +85,13 @@ def convertVCF(vcflist):
     for position in vcflist:
         if position[1] != "0":
             if position[4] == "<->": #deletion:
-                newVCFlist[-1][3] += position[3]
+                if position[3] != "<->":
+                    newVCFlist[-1][3] += position[3]
             else:
                 newVCFlist.append(position)
         else:
-            if position[3] == "<->": #Insertion
-                if position[4] == "<->":
-                    newVCFlist[-1][4] += "-"
-                else:
-                    newVCFlist[-1][4] += position[4]
+            if position[3] == "<->" and position[4] != "<->": #Insertion
+                newVCFlist[-1][4] += position[4]
 
     return newVCFlist
 
