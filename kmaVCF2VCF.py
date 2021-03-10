@@ -55,8 +55,7 @@ def handlePosition(position, positionType, minorityVariant, minority_depth, min_
                 position[4] = minorityVariant
                 newVCFlist.append(position)
             else:
-                if indelFlag == False:
-                    newVCFlist[-1][4] += position[4]
+                newVCFlist[-1][4] += position[4]
         else:
             newVCFlist.append(position)
     elif positionType == "deletion_majority":

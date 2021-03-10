@@ -4,17 +4,18 @@ import sys
 import os
 import argparse
 import gzip
+import json
 
 #Identifies variants according to inputput type, and can give a binary output when searching for a specific variant
 
 parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-p', action="store", type=str, required=True, nargs='+', dest='positions', default="", help='Positions')
-parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf', default="", help='vcf')
+parser.add_argument('-vcf', action="store", type=str, required=True, nargs='+', dest='vcf', default="", help='vcf. ')
 parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
 parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='depth threshold for including a position')
 parser.add_argument('-f', action="store", type=str, dest='filter', default='1', help='Filter for either all variants (1), Majority only (2), Minority only(3)')
-parser.add_argument('-o', action="store", type=str, dest='outputformat', default='1', help='Output format: Check all variants an given positions, and output those found (1), All positions must be found (2) ')
+parser.add_argument('-o', action="store", type=str, dest='outputformat', default='1', help='Output format: Check all variants an given positions, and output those found (1), All positions must be found (2)')
 
 
 args = parser.parse_args()
@@ -27,13 +28,23 @@ min_s = args.min_s
 filter = args.filter
 outputformat = args.outputformat
 
+if len(vcf) > 1:
+    outputformat = "3"
 def main():
-    vcfList = loadVCF(vcf)
-    checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputformat)
+    if len(vcf) == 1:
+        vcfList = loadVCF(vcf[0])
+        checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputformat, filename)
+    else:
+        multipleVCFHandler(vcf, positions)
 
 
+def multipleVCFHandler(vcf, positions):
+    for file in vcf:
+        filename = file.split("/")[-1]
+        vcfList = loadVCF(file)
+        checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputformat, filename)
 
-def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputformat):
+def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputformat, filename):
     found_positions = []
     for position in positions:
         majority = ""
@@ -46,7 +57,7 @@ def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputform
                     if filter == '2': #Check support for majority:
                         if int(vcfInfo[1][3:])/int(vcfInfo[0][3:]) >= maj_s:
                             majority = "Position: {} <{}> is a Majority Variant with support: {}".format(position, vcfList[i][3], int(vcfInfo[1][3:])/int(vcfInfo[0][3:]))
-                    if filter == '3': #Check support for majority:
+                    if filter == '3': #Check support for minority:
                         variantCount = variants.split(",")
                         sort_variantCount = []
                         for i in range(len(variantCount)):
@@ -60,8 +71,6 @@ def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputform
                         if minority_depth >= min_s: #Support
                             minority = "Position: {} <{}> is a Minority Variant with support: {}".format(position,minorityVariant, minority_depth)
                     if filter == '1':
-                        if int(vcfInfo[1][3:])/int(vcfInfo[0][3:]) >= maj_s:
-                            majority = "Position: {} <{}> is a Majority Variant with support: {}".format(position, vcfList[i][3], int(vcfInfo[1][3:])/int(vcfInfo[0][3:]))
                         variantCount = variants.split(",")
                         sort_variantCount = []
                         for i in range(len(variantCount)):
@@ -74,6 +83,10 @@ def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputform
                         minority_depth = int(sort_variantCount[-2]) / dp
                         if minority_depth >= min_s:  # Support
                             minority = "Position: {} <{}> is a Minority Variant with support: {}".format(position,minorityVariant,minority_depth)
+                        else:
+                            majority = "Position: {} <{}> is a Majority Variant with support: {}".format(position, vcfList[i][3], int(vcfInfo[1][3:])/int(vcfInfo[0][3:]))
+
+
         if outputformat == '1':
             if majority != "":
                 print (majority)
@@ -84,6 +97,13 @@ def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputform
                 found_positions.append("minority,{},{}".format(minorityVariant,position))
             elif majority != "":
                 found_positions.append("majority,{},{}".format(vcfList[i][3], position))
+
+        if outputformat == '3':
+            if minority != "":
+                found_positions.append("{},{},{},2".format(filename, minorityVariant,position))
+            elif majority != "":
+                found_positions.append("{},{},{},1".format(filename, vcfList[i][3], position))
+
     if outputformat == '2':
         if len(positions) == len(found_positions):
             print ("All positions were identified as variants")
@@ -93,6 +113,15 @@ def checkForVariants(vcfList, positions, depth, maj_s, min_s, filter, outputform
             print("All positions were NOT identified as variants")
             print("{}/{} positions found".format(len(found_positions), len(positions)))
             print(found_positions)
+
+    if outputformat == '3':
+        if len(found_positions) > 1:
+            for item in found_positions:
+                print(item)
+        elif len(found_positions) == 1:
+            print (found_positions[0])
+        else:
+            pass
 
 
 
