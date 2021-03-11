@@ -11,7 +11,6 @@ import json
 parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-p', action="store", type=str, required=True, nargs='+', dest='positions', default="", help='Positions')
 parser.add_argument('-vcf', action="store", type=str, required=True, nargs='+', dest='vcf', default="", help='vcf. ')
-parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
 parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='depth threshold for including a position')
 parser.add_argument('-f', action="store", type=str, dest='filter', default='1', help='Filter for either all variants (1), Majority only (2), Minority only(3)')

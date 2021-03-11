@@ -9,7 +9,7 @@ import gzip
 
 parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf', default="", help='kma vcf')
-parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='Depth threshold for including a position')
+parser.add_argument('-d', action="store", type=int, dest='depth', default=100, help='Depth threshold for including a position')
 #parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
 
@@ -55,7 +55,10 @@ def handlePosition(position, positionType, minorityVariant, minority_depth, min_
                 position[4] = minorityVariant
                 newVCFlist.append(position)
             else:
-                newVCFlist[-1][4] += position[4]
+                if newVCFlist == []:
+                    newVCFlist.append(position)
+                else:
+                    newVCFlist[-1][4] += position[4]
         else:
             newVCFlist.append(position)
     elif positionType == "deletion_majority":
