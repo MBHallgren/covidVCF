@@ -12,6 +12,7 @@ parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf',
 parser.add_argument('-d', action="store", type=int, dest='depth', default=100, help='Depth threshold for including a position')
 #parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
+parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.70, help='Support for accepting gaps')
 
 args = parser.parse_args()
 
@@ -19,6 +20,7 @@ vcfheader = "##reference=/home/share/pkrisz5-sarscov2veo/data/ref/sars2/NC_04551
 vcf = args.vcf
 depth = args.depth
 min_s = args.min_s
+gap_s = args.gap_s
 
 
 def main():
@@ -27,6 +29,8 @@ def main():
     vcflist = indelTag(vcflist)
     print (vcfheader)
     for i in range(len(vcflist)):
+        vcflist[i][3] = vcflist[i][3].upper()
+        vcflist[i][4] = vcflist[i][4].upper()
         print ("\t".join(vcflist[i]))
 
 def indelTag(vcflist):
@@ -42,7 +46,7 @@ def convertVCF(vcflist, min_s):
     for position in vcflist:
         vcfInfo = position[7].split(";")
         if float(vcfInfo[0][3:]) >= depth:
-            positionType = indentifyPositionType(position)
+            positionType = indentifyPositionType(position, gap_s)
             minorityVariant, minority_depth = calculateMinor(vcfInfo)
             newVCFlist = handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist)
     return newVCFlist
@@ -86,9 +90,17 @@ def calculateMinor(vcfInfo):
     minority_depth = int(sort_variantCount[-2]) / dp
     return minorityVariant, minority_depth
 
-def indentifyPositionType(position):
+def indentifyPositionType(position, gap_s):
+    vcfInfo = position[7].split(";")
+    dp = int(vcfInfo[0][3:])
+    ad6 = vcfInfo[5][4:]
+    ad6list = ad6.split(",")
     if position[1] != "0":
+        gaps_support = int(ad6list[-1])/dp
+        #print (gaps_support)
         if position[4] == "<->":  # deletion:
+            positionType = "deletion_majority"
+        elif gaps_support >= gap_s:
             positionType = "deletion_majority"
         else:
             positionType = "variant_majority"
