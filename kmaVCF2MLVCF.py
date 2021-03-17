@@ -31,8 +31,7 @@ def main():
     for i in range(len(vcflist)):
         vcflist[i][3] = vcflist[i][3].upper()
         vcflist[i][4] = vcflist[i][4].upper()
-        if vcflist[i][3] != vcflist[i][4]:
-            print ("\t".join(vcflist[i]))
+        print ("\t".join(vcflist[i]))
 
 def indelTag(vcflist):
     newVCFlist = []
@@ -113,6 +112,10 @@ def indentifyPositionType(position, gap_s):
         else:
             positionType = "minor_insertion"
     return positionType
+
+
+
+
 
 def loadVCF(vcf):
     vcfList = []
