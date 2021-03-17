@@ -16,7 +16,7 @@ parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=
 
 args = parser.parse_args()
 
-vcfheader = "##reference=/home/share/pkrisz5-sarscov2veo/data/ref/sars2/NC_045512.2.fa\n##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Raw Depth\">\n##INFO=<ID=AF,Number=1,Type=Float,Description=\"Allele Frequency\">\n##INFO=<ID=SB,Number=1,Type=Integer,Description=\"Phred-scaled strand bias at this position\">\n##INFO=<ID=AD6,Number=6,Type=Integer,Description=\"Count of all alternative alleles: A,C,G,T,N,-\">\">\n##INFO=<ID=INDEL,Number=0,Type=Flag,Description=\"Indicates that the variant is an INDEL.\">\n##INFO=<ID=CONSVAR,Number=0,Type=Flag,Description=\"Indicates that the variant is a consensus variant (as opposed to a low frequency variant).\">\n##INFO=<ID=HRUN,Number=1,Type=Integer,Description=\"Homopolymer length to the right of report indel position\">"
+vcfheader = "##INFO=<ID=DP,Number=1,Type=Integer,Description=\"Raw Depth\">\n##INFO=<ID=AF,Number=1,Type=Float,Description=\"Allele Frequency\">\n##INFO=<ID=SB,Number=1,Type=Integer,Description=\"Phred-scaled strand bias at this position\">\n##INFO=<ID=DP2,Number=1,Type=Integer,Description=\"Count of the alternative allele\">\">\n##INFO=<ID=INDEL,Number=0,Type=Flag,Description=\"Indicates that the variant is an INDEL.\">\n##INFO=<ID=CONSVAR,Number=0,Type=Flag,Description=\"Indicates that the variant is a consensus variant (as opposed to a low frequency variant).\">\n##INFO=<ID=HRUN,Number=1,Type=Integer,Description=\"Homopolymer length to the right of report indel position\">"
 vcf = args.vcf
 depth = args.depth
 min_s = args.min_s
@@ -25,13 +25,55 @@ gap_s = args.gap_s
 
 def main():
     vcflist = loadVCF(vcf)
+    vcflist = removeDoubleGaps(vcflist, depth)
+    vcflist = insertMinor(vcflist, min_s)
     vcflist = convertVCF(vcflist, min_s)
     vcflist = indelTag(vcflist)
     print (vcfheader)
     for i in range(len(vcflist)):
         vcflist[i][3] = vcflist[i][3].upper()
         vcflist[i][4] = vcflist[i][4].upper()
-        print ("\t".join(vcflist[i]))
+        if vcflist[i][3] != vcflist[i][4]:
+            print ("\t".join(vcflist[i]))
+
+def insertMinor(vcflist, min_s):
+    newvcflist = []
+    for position in vcflist:
+        newvcflist.append(position)
+        vcfInfo = position[7].split(";")
+        if vcfInfo[-1][0:3]!= "DP2":
+            minorityVariant, minority_depth, minority_count = calculateMinor(vcfInfo)
+            if minority_depth >= min_s:
+                if minorityVariant == "-":
+                    position[4] = "<->"
+                    newvcflist.append(position)
+                else:
+                    if minorityVariant.upper() == position[3]:
+                        pass
+                    else:
+                        position[4] = minorityVariant
+                        dp = int(vcfInfo[0][3:])
+                        vcfInfo[-1] = "DP2:" + str(minority_count)
+                        vcfInfo[1] = "AD=" + str(minority_count)
+                        vcfInfo[2] = "AF=" + str(minority_count / dp)[0:4]
+                        vcfInfo = ";".join(vcfInfo)
+                        position[7] = vcfInfo
+                        position[5] = "0"
+                        newvcflist.append(position)
+    return vcflist
+
+def removeDoubleGaps(vcflist, depth):
+    newvcflist = []
+    for position in vcflist:
+        vcfInfo = position[7].split(";")
+        dp = int(vcfInfo[0][3:])
+        if position[3] == "<->" and position[4] == "<->":
+            pass
+        elif depth > dp: #Exclude non supported positions
+            pass
+        else:
+            newvcflist.append(position)
+    return newvcflist
 
 def indelTag(vcflist):
     newVCFlist = []
@@ -41,40 +83,108 @@ def indelTag(vcflist):
         newVCFlist.append(position)
     return newVCFlist
 
+def checkIndel(position, gap_s, minority_depth, min_s, minorityVariant):
+    indelCheck = False
+    type = None
+    if position[3] == "<->":
+        type = "insertion"
+        indelCheck = True
+    if position[4] == "<->":
+        type = "deletion"
+        indelCheck = True
+    vcfInfo = position[7].split(";")
+    dp = int(vcfInfo[0][3:])
+    ad6 = vcfInfo[5][4:]
+    ad6list = ad6.split(",")
+    gaps_support = int(ad6list[-1]) / dp
+    if gaps_support > gap_s:
+        type = "deletion"
+        indelCheck = True
+    if minority_depth >= min_s:
+        if minorityVariant == "-":
+            type = "deletion"
+            indelCheck = True
+    return indelCheck, type
+
 def convertVCF(vcflist, min_s):
     newVCFlist = []
+    indellist = []
+    prev_position = None
     for position in vcflist:
         vcfInfo = position[7].split(";")
-        if float(vcfInfo[0][3:]) >= depth:
-            positionType = indentifyPositionType(position, gap_s)
-            minorityVariant, minority_depth = calculateMinor(vcfInfo)
-            newVCFlist = handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist)
-    return newVCFlist
-
-def handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist):
-    indelFlag = False
-
-    if positionType == "variant_majority":
-        if minority_depth >= min_s:
-            if minorityVariant != "-":
-                position[4] = minorityVariant
-                newVCFlist.append(position)
-            else:
-                if newVCFlist == []:
-                    newVCFlist.append(position)
-                else:
-                    newVCFlist[-1][4] += position[4]
+        if vcfInfo[-1][0:3]== "DP2":
+            indelCheck = False
         else:
-            newVCFlist.append(position)
-    elif positionType == "deletion_majority":
-        newVCFlist[-1][3] += position[3]
-    elif positionType == "insertion_majority":
-        newVCFlist[-1][4] += position[4]
-    elif positionType == "minor_insertion":
-        pass
-    else:
-        newVCFlist.append(position)
+            minorityVariant, minority_depth, minority_count = calculateMinor(vcfInfo)
+            indelCheck, type = checkIndel(position, gap_s, minority_depth, min_s, minorityVariant)
+        if indelCheck == False: #If currect position is not indel, print previous
+            if prev_position != None:
+                newVCFlist.append(prev_position)
+            if indellist != []: #Indel has ended, new position
+                if prev_type == "insertion":
+                    indelsequence = ""
+                    nucleotideposition = indellist[0][1]
+                    for indelposition in indellist:
+                        indelsequence += indelposition[4]
+                    for i in range(len(indellist)):
+                        if i == 0: #Add sequence
+                            indellist[i][4] = indelsequence
+                            indellist[i][3] = indelsequence[0]
+                        else:
+                            indellist[i][4] = indelsequence[0:-i]
+                            indellist[i][3] = indelsequence[0]
+                        indellist[i][1] = nucleotideposition
+                        indelvcfInfo = indellist[i][7].split(";") #add DP2
+                        ad6 = indelvcfInfo[5][4:]
+                        ad6list = ad6.split(",")
+                        ad6listint = []
+                        for number in ad6list:
+                            ad6listint.append(int(number))
+                        dp2 = max(ad6listint)
+                        indelvcfInfo[-1] = "DP2=" + str(dp2)
+                        indelvcfInfo = ";".join(indelvcfInfo)
+                        indellist[i][7] = indelvcfInfo
+                        indellist[i][5] = "0"
+                    for item in indellist:
+                        newVCFlist.append(item)
 
+                elif prev_type == "deletion":
+                    indelsequence = ""
+                    nucleotideposition = indellist[0][1]
+                    for indelposition in indellist:
+                        indelsequence += indelposition[3]
+                    for i in range(len(indellist)):
+                        if i == 0:  # Add sequence
+                            indellist[i][3] = indelsequence
+                            indellist[i][4] = indelsequence[0]
+                        else:
+                            indellist[i][3] = indelsequence[0:-i]
+                            indellist[i][4] = indelsequence[0]
+                        indellist[i][1] = nucleotideposition
+                        indelvcfInfo = indellist[i][7].split(";")  # add DP2
+                        ad6 = indelvcfInfo[5][4:]
+                        ad6list = ad6.split(",")
+                        deletions = int(ad6list[-1])
+                        dp = int(indelvcfInfo[0][3:])
+                        indelvcfInfo[-1] = "DP2=" + str(deletions)
+                        indelvcfInfo[1] = "AD=" + str(deletions)
+                        indelvcfInfo[2] = "AF=" + str(deletions/dp)[0:4]
+                        indelvcfInfo = ";".join(indelvcfInfo)
+                        indellist[i][7] = indelvcfInfo
+                        indellist[i][5] = "0"
+                    for item in indellist:
+                        newVCFlist.append(item)
+                indellist = [] #Reset indellist
+
+        elif indelCheck == True:
+            if indellist == []: #First indel extension found
+                indellist.append(prev_position)
+                indellist.append(position)
+            else:
+                indellist.append(position)
+        prev_type = type
+        prev_position = position
+    newVCFlist.append(prev_position)
     return newVCFlist
 
 def calculateMinor(vcfInfo):
@@ -89,7 +199,8 @@ def calculateMinor(vcfInfo):
     variantList = ['A', 'C', 'G', 'T', 'N', '-']
     minorityVariant = variantList[minority_index]
     minority_depth = int(sort_variantCount[-2]) / dp
-    return minorityVariant, minority_depth
+    minority_count = int(sort_variantCount[-2])
+    return minorityVariant, minority_depth, minority_count
 
 def indentifyPositionType(position, gap_s):
     vcfInfo = position[7].split(";")
@@ -112,10 +223,6 @@ def indentifyPositionType(position, gap_s):
         else:
             positionType = "minor_insertion"
     return positionType
-
-
-
-
 
 def loadVCF(vcf):
     vcfList = []
