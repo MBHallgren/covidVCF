@@ -13,6 +13,7 @@ parser.add_argument('-vcfs', action="store", type=str, required=True, dest='vcfs
 parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.8, help='Support for accepting majority variant')
 parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='Depth threshold for including a position')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.20, help='Support for accepting minority variant')
+parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.70, help='Support for accepting gaps')
 
 args = parser.parse_args()
 
@@ -21,6 +22,7 @@ vcfs = args.vcfs
 depth = args.depth
 maj_s = args.maj_s
 min_s = args.min_s
+gap_s = args.gap_s
 
  # SHOULD BE MADE TO HANDLE MULTIPLE BASES PER VCF POSITION!!
 
@@ -61,11 +63,11 @@ def main():
 
 def makeSingleSequnece(header, sequence, vcf):
     vcfList , vcfName = loadVCF(vcf)
-    header, sequence = consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName)
+    header, sequence = consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_s)
     return header, sequence
 
 
-def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName):
+def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_s):
     for position in vcfList:
         #print (position)
         if position[3] == "<->":
@@ -76,7 +78,10 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName):
         if float(vcfInfo[0][3:]) >= depth: #Check depth
             #Check for minority variant:
             variants = vcfInfo[5][4:]
+            vcfInfo = position[7].split(";")
+            dp = int(vcfInfo[0][3:])
             variantCount = variants.split(",")
+            gaps_support = int(variantCount[-1]) / dp
             sort_variantCount = []
             for i in range(len(variantCount)):
                 sort_variantCount.append(int(variantCount[i]))
@@ -91,6 +96,8 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName):
                     if position[1] != "0":
                         if position[4] == "-":  # Handle deletion
                             sequence[int(position[1])-1] = "-"
+                        elif gaps_support >= gap_s:
+                            sequence[int(position[1])-1] = "-"
                         else: #minority variant
                             sequence[int(position[1])-1] = minorityVariant
                     else: #insertion
@@ -101,10 +108,11 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName):
                     if position[1] != "0":
                         if position[4] == "-":  # Handle deletion
                             sequence[int(position[1])-1] = "-"
+                        elif gaps_support >= gap_s:
+                            sequence[int(position[1])-1] = "-"
                         else:  # Majority call
                             sequence[int(position[1])-1] = position[4]
                     else:  # insertion
-
                         if position[3] != "-" or position[4] != "-":
                             sequence[int(previousPositions[1])-1] = sequence[int(previousPositions[1])-1] + position[4]
         if position[1] != "0":

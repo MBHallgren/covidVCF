@@ -14,6 +14,7 @@ parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=
 parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='Depth threshold for including a position')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
 parser.add_argument('-variantCode', action="store", type=int, dest='variantCode', default=1, help='1 = Majority positions only, 2 = Minority positions only, 3 = UPAC minority positions')
+parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.70, help='Support for accepting gaps')
 
 args = parser.parse_args()
 
@@ -23,6 +24,7 @@ variantCode = args.variantCode
 depth = args.depth
 maj_s = args.maj_s
 min_s = args.min_s
+gap_s = args.gap_s
 
 #['A','C','G','T','N','-']
 UPACdict = dict()
@@ -74,7 +76,10 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, UPACdict):
         if variantCode == 2:
             if float(vcfInfo[0][3:]) >= depth: #CheckDepth and maj_s and do not correct insertions or deletions
                 variants = vcfInfo[5][4:]
+                vcfInfo = position[7].split(";")
+                dp = int(vcfInfo[0][3:])
                 variantCount = variants.split(",")
+                gaps_support = int(variantCount[-1]) / dp
                 sort_variantCount = []
                 for i in range(len(variantCount)):
                     sort_variantCount.append(int(variantCount[i]))
@@ -89,6 +94,8 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, UPACdict):
                         previousPositions = position
                         if position[4] == "<->": #Handle deletion
                             sequence[int(position[1])] = "-"
+                        elif gaps_support >= gap_s:
+                            sequence[int(position[1])-1] = "-"
                         else:
                             sequence[int(position[1])] = minorityVariant
                     else:
@@ -116,6 +123,8 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, UPACdict):
                         previousPositions = position
                         if position[4] == "<->":  # Handle deletion
                             sequence[int(position[1])] = "-"
+                        elif gaps_support >= gap_s:
+                            sequence[int(position[1])-1] = "-"
                         else:
                             if (majorityVariant + minorityVariant) in UPACdict:
                                 sequence[int(position[1])] = UPACdict[majorityVariant + minorityVariant]

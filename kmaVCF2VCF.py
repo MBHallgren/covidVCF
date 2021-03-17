@@ -11,7 +11,7 @@ parser = argparse.ArgumentParser(description='vcfFilter')
 parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf', default="", help='kma vcf')
 parser.add_argument('-d', action="store", type=int, dest='depth', default=100, help='Depth threshold for including a position')
 #parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
-parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.15, help='Support for accepting minority variant')
+parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=1, help='Support for accepting minority variant. To call minority variants, set min_s to ~0.2')
 parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.70, help='Support for accepting gaps')
 
 args = parser.parse_args()
@@ -53,6 +53,7 @@ def convertVCF(vcflist, min_s):
 
 def handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist):
     indelFlag = False
+
     if positionType == "variant_majority":
         if minority_depth >= min_s:
             if minorityVariant != "-":
