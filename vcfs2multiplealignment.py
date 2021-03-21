@@ -12,6 +12,7 @@ parser.add_argument('-ref', action="store", type=str, required=True, dest='refer
 parser.add_argument('-vcfs', action="store", type=str, required=True, dest='vcfs', nargs="+", default="", help='vcf')
 parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.8, help='Support for accepting majority variant')
 parser.add_argument('-d', action="store", type=int, dest='depth', default=50, help='Depth threshold for including a position')
+parser.add_argument('-split', action="store_true", dest='split', default=False, help='Split: Make a majority consensus AND minority consensus of the inputs and include both in the multiple alignment')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=0.20, help='Support for accepting minority variant')
 parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.70, help='Support for accepting gaps')
 
@@ -25,8 +26,16 @@ min_s = args.min_s
 gap_s = args.gap_s
 
  # SHOULD BE MADE TO HANDLE MULTIPLE BASES PER VCF POSITION!!
+ #Split (Create a majority variant, and a minority variant for each vcf )
 
 def main():
+    if args.split == True:
+        multipleAlignmentSplit()
+    else:
+        multipleAlignmentSingle()
+
+
+def multipleAlignmentSingle():
     sequencelist = []
     headerlist = []
 
@@ -36,6 +45,41 @@ def main():
         headerlist.append(header)
         sequencelist.append(sequence)
 
+    positions = len(sequence)
+    sequencelist_len = len(sequencelist)
+    for i in range(positions):
+        max = 0
+        for t in range(sequencelist_len):
+            if len(sequencelist[t][i]) > max:
+                max = len(sequencelist[t][i])
+        if max > 1:  # insertion has occured
+            for t in range(sequencelist_len):
+                if max > len(sequencelist[t][i]):  # Select positions needing gaps
+                    diff = max - len(sequencelist[t][i])
+                    gaps = "-" * diff
+                    sequencelist[t][i] = sequencelist[t][i] + gaps
+    for i in range(len(sequencelist)):
+        consensus = "".join(sequencelist[i])
+        print(headerlist[i])
+        print(consensus)
+
+def multipleAlignmentSplit():
+    sequencelist = []
+    headerlist = []
+
+    for file in vcfs: #Majority
+        header, refsequence = loadSequence(referencefile)  # Return header as string, sequence as list
+        header, sequence = makeSingleSequnece(header, refsequence, file, 1, maj_s)
+        header = header + "_majority"
+        headerlist.append(header)
+        sequencelist.append(sequence)
+
+    for file in vcfs: #Minority
+        header, refsequence = loadSequence(referencefile)  # Return header as string, sequence as list
+        header, sequence = makeSingleSequnece(header, refsequence, file, min_s, maj_s)
+        header = header + "_minority"
+        headerlist.append(header)
+        sequencelist.append(sequence)
 
     positions = len(sequence)
     sequencelist_len = len(sequencelist)
@@ -44,26 +88,24 @@ def main():
         for t in range(sequencelist_len):
             if len(sequencelist[t][i]) > max:
                 max = len(sequencelist[t][i])
-        if max > 1: #insertion has occured
+        if max > 1:  # insertion has occured
             for t in range(sequencelist_len):
-                if max > len(sequencelist[t][i]): #Select positions needing gaps
+                if max > len(sequencelist[t][i]):  # Select positions needing gaps
                     diff = max - len(sequencelist[t][i])
                     gaps = "-" * diff
                     sequencelist[t][i] = sequencelist[t][i] + gaps
     for i in range(len(sequencelist)):
         consensus = "".join(sequencelist[i])
-        print (headerlist[i])
-        print (consensus)
+        print(headerlist[i])
+        print(consensus)
 
 
 
 
 
-
-
-def makeSingleSequnece(header, sequence, vcf):
+def makeSingleSequnece(header, refsequence, vcf, min_s, maj_s):
     vcfList , vcfName = loadVCF(vcf)
-    header, sequence = consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_s)
+    header, sequence = consensusMaker(header, refsequence, vcfList, depth, maj_s, min_s, vcfName, gap_s)
     return header, sequence
 
 
@@ -91,7 +133,7 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_
             variantList = ['A', 'C', 'G', 'T', 'N', '-']
             minorityVariant = variantList[minority_index]
             minority_depth = int(sort_variantCount[-2]) / dp
-            if position[3] != "-" or position[4] != "-": #spørg PLAN om det her
+            if position[3] != "-" or position[4] != "-":
                 if minority_depth > min_s: #Minority Variant found
                     if position[1] != "0":
                         if position[4] == "-":  # Handle deletion
