@@ -41,7 +41,7 @@ def multipleAlignmentSingle():
 
     for file in vcfs:
         header, refsequence = loadSequence(referencefile)  # Return header as string, sequence as list
-        header, sequence = makeSingleSequnece(header, refsequence, file)
+        header, sequence = makeSingleSequnece(header, refsequence, file, min_s, maj_s)
         headerlist.append(header)
         sequencelist.append(sequence)
 
@@ -71,6 +71,7 @@ def multipleAlignmentSplit():
         header, refsequence = loadSequence(referencefile)  # Return header as string, sequence as list
         header, sequence = makeSingleSequnece(header, refsequence, file, 1, maj_s)
         header = header + "_majority"
+        sys.stderr.write(header)
         headerlist.append(header)
         sequencelist.append(sequence)
 
@@ -78,6 +79,7 @@ def multipleAlignmentSplit():
         header, refsequence = loadSequence(referencefile)  # Return header as string, sequence as list
         header, sequence = makeSingleSequnece(header, refsequence, file, min_s, maj_s)
         header = header + "_minority"
+        sys.stderr.write(header)
         headerlist.append(header)
         sequencelist.append(sequence)
 
@@ -110,6 +112,7 @@ def makeSingleSequnece(header, refsequence, vcf, min_s, maj_s):
 
 
 def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_s):
+    minority_list =[]
     for position in vcfList:
         #print (position)
         if position[3] == "<->":
@@ -135,6 +138,7 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_
             minority_depth = int(sort_variantCount[-2]) / dp
             if position[3] != "-" or position[4] != "-":
                 if minority_depth > min_s: #Minority Variant found
+                    minority_list.append(position)
                     if position[1] != "0":
                         if position[4] == "-":  # Handle deletion
                             sequence[int(position[1])-1] = "-"
@@ -159,7 +163,6 @@ def consensusMaker(header, sequence, vcfList, depth, maj_s, min_s, vcfName, gap_
                             sequence[int(previousPositions[1])-1] = sequence[int(previousPositions[1])-1] + position[4]
         if position[1] != "0":
             previousPositions = position
-    header = ">" + vcfName
     return header, sequence
 
 def loadSequence(referencefile):
