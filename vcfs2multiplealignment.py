@@ -60,6 +60,7 @@ def multipleAlignmentSingle():
                     sequencelist[t][i] = sequencelist[t][i] + gaps
     for i in range(len(sequencelist)):
         consensus = "".join(sequencelist[i])
+        consensus = consensus.upper()
         print(headerlist[i])
         print(consensus)
 
@@ -107,6 +108,7 @@ def multipleAlignmentSplit():
 
 def makeSingleSequnece(header, refsequence, vcf, min_s, maj_s):
     vcfList , vcfName = loadVCF(vcf)
+    header = ">" + vcfName
     header, sequence = consensusMaker(header, refsequence, vcfList, depth, maj_s, min_s, vcfName, gap_s)
     return header, sequence
 
