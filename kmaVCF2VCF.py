@@ -12,7 +12,7 @@ parser.add_argument('-vcf', action="store", type=str, required=True, dest='vcf',
 parser.add_argument('-d', action="store", type=int, dest='depth', default=100, help='Depth threshold for including a position')
 #parser.add_argument('-maj_s', action="store", type=float, dest='maj_s', default=0.7, help='Support for accepting majority variant')
 parser.add_argument('-min_s', action="store", type=float, dest='min_s', default=1, help='Support for accepting minority variant. To call minority variants, set min_s to ~0.2')
-parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.50, help='Support for accepting gaps')
+parser.add_argument('-gap_s', action="store", type=float, dest='gap_s', default=0.40, help='Support for accepting gaps')
 
 args = parser.parse_args()
 
@@ -49,10 +49,10 @@ def convertVCF(vcflist, min_s):
         if float(vcfInfo[0][3:]) >= depth:
             positionType, positionvcfInfo = indentifyPositionType(position, gap_s)
             minorityVariant, minority_depth = calculateMinor(vcfInfo)
-            newVCFlist = handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist)
+            newVCFlist = handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist, positionvcfInfo)
     return newVCFlist
 
-def handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist):
+def handlePosition(position, positionType, minorityVariant, minority_depth, min_s, newVCFlist, positionvcfInfo):
     indelFlag = False
 
     if positionType == "variant_majority":
@@ -69,8 +69,10 @@ def handlePosition(position, positionType, minorityVariant, minority_depth, min_
             newVCFlist.append(position)
     elif positionType == "deletion_majority":
         newVCFlist[-1][3] += position[3]
+        newVCFlist[-1][7] = positionvcfInfo
     elif positionType == "insertion_majority":
         newVCFlist[-1][4] += position[4]
+        newVCFlist[-1][7] = positionvcfInfo
     elif positionType == "minor_insertion":
         pass
     else:
@@ -112,6 +114,7 @@ def indentifyPositionType(position, gap_s):
 
         else:
             positionType = "minor_insertion"
+    vcfInfo = position[7]
     return positionType, vcfInfo
 
 def loadVCF(vcf):
